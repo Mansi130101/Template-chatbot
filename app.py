@@ -9,8 +9,14 @@ chat = model.start_chat(history=[])
 app = Flask(__name__, static_url_path='', static_folder='static')
 
 def get_response(message):
-    response = chat.send_message(message)
-    return response.text
+    try:
+        response = chat.send_message(message)
+        if response and hasattr(response, 'text'):
+            return response.text
+        else:
+            return "Sorry, I couldn't get a response."
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 @app.route('/')
 def index():
@@ -19,6 +25,8 @@ def index():
 @app.route('/ask', methods=['POST'])
 def ask():
     user_message = request.json.get('message')
+    if not user_message:
+        return jsonify({'response': "No message received."}), 400
     reply = get_response(user_message)
     return jsonify({'response': reply})
 
